@@ -2,17 +2,19 @@
 ## Overview
 This document describes symptoms, investigation commands, root causes, remediation steps, and validation procedures for six Kubernetes troubleshooting scenarios.
 **Environment:** Local Kind Kubernetes cluster
+
 **Namespace:** `troubleshooting-lab`
+
 > These scenarios were tested in a local lab. They do not represent production incident validation. Verify the active Kubernetes context before applying changes.
 ## General Investigation Workflow
 Use this workflow when troubleshooting a Kubernetes workload:
-1\. Identify the affected namespace, pod, deployment, or service.
-2\. Check the resource status and restart count.
-3\. Inspect pod descriptions, container logs, and Kubernetes events.
-4\. Identify the most likely root cause using the available evidence.
-5\. Apply the smallest appropriate correction.
-6\. Verify recovery and monitor for recurring failures.
-7\. Document the root cause, resolution, and validation evidence.
+1. Identify the affected namespace, pod, deployment, or service.
+2. Check the resource status and restart count.
+3. Inspect pod descriptions, container logs, and Kubernetes events.
+4. Identify the most likely root cause using the available evidence.
+5. Apply the smallest appropriate correction.
+6. Verify recovery and monitor for recurring failures.
+7. Document the root cause, resolution, and validation evidence.
 Useful commands:
 ```bash
 kubectl config current-context
