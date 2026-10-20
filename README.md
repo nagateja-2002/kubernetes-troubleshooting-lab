@@ -62,7 +62,7 @@ A hands-on Kubernetes troubleshooting project using a local Kind cluster. This p
 
 
 
-### 3. Pending Pod â€” Insufficient CPU
+### 3. Pending Pod - Insufficient CPU
 
 **Manifest:** `03-pending-demo.yaml`
 
