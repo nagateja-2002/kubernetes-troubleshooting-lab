@@ -175,12 +175,12 @@ kubectl get pods --show-labels -n troubleshooting-lab
 kubectl get service crash-demo-service -n troubleshooting-lab -o yaml
 ```
 ### Root Cause
-The demonstration Service initially used a selector that did not match the target pod's labels.
+The Service manifest is self-contained: it creates a ready BusyBox Deployment labelled `app=endpoint-target` and a Service whose initial selector is `app=service-demo`, so the Service has no matching endpoints.
 ### Remediation
 Correct the Service selector to match the labels on the intended pod:
 ```yaml
 selector:
-  app: crash-demo
+  app: endpoint-target
 ```
 Apply the corrected manifest:
 ```bash
@@ -193,7 +193,7 @@ kubectl get endpoints crash-demo-service -n troubleshooting-lab
 kubectl get pods --show-labels -n troubleshooting-lab
 ```
 Confirm that the Service has an endpoint corresponding to the selected pod.
-> **Validation limitation:** This scenario validates Service selector matching and endpoint selection. The BusyBox demonstration container is not an HTTP server, so endpoint presence does not prove that HTTP requests will succeed.
+> **Validation limitation:** This scenario validates Service selector matching and endpoint selection. The BusyBox demonstration container is not an HTTP server, so endpoint presence does not prove that HTTP requests will succeed. Run this scenario independently after checking the context; its manifest creates the namespace and its own target Deployment.
 ## 6. Failed Deployment Rollout and Rollback
 ### Symptoms
 - A Deployment rollout does not complete successfully.
