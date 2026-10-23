@@ -96,11 +96,11 @@ kubectl get events -n troubleshooting-lab --sort-by=.metadata.creationTimestamp
 
 **Initial condition:** A mismatched Service selector resulted in no endpoints.
 
-**Remediation:** Corrected the selector to `app=crash-demo`.
+**Remediation:** For the current manifest, change the selector to `app=endpoint-target`.
 
-**Observed result:** An endpoint was populated for the matching pod.
+**Historical observation:** An endpoint was populated after selector correction in an earlier local exercise. The self-contained target Deployment now in the repository has not been runtime-tested by GitHub Actions; repeat the scenario from the current commit to confirm its endpoint state.
 
-**Limitation:** Endpoint selection was validated; HTTP connectivity was not tested because the BusyBox container was not configured as an HTTP server.
+**Limitation:** Endpoint selection does not prove HTTP connectivity, because the BusyBox container is not configured as an HTTP server.
 
 **Evidence commands:**
 
