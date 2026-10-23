@@ -1,0 +1,41 @@
+name: Kubernetes Manifest Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-manifests:
+    name: Validate scenario manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7.0.1
+
+      - name: Download pinned Kubeconform release
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --location \
+            https://github.com/yannh/kubeconform/releases/download/v0.8.0/kubeconform-linux-amd64.tar.gz \
+            --output /tmp/kubeconform.tar.gz
+          echo "9bc2bffbf71f261128533edaf912153948b7ff238f9a531ae6d34466ec287883  /tmp/kubeconform.tar.gz" | sha256sum --check
+          tar -xzf /tmp/kubeconform.tar.gz -C /tmp kubeconform
+          sudo install /tmp/kubeconform /usr/local/bin/kubeconform
+
+      - name: Validate Kubernetes schemas
+        run: |
+          kubeconform -strict -summary \
+            01-crashloop-demo.yaml \
+            02-imagepull-demo.yaml \
+            03-pending-demo.yaml \
+            04-probe-failure.yaml \
+            05-service-networking.yaml \
+            06-rollout-demo.yaml \
+            06-rollout-failure.yaml
