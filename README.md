@@ -1,213 +1,108 @@
 # Kubernetes Troubleshooting Lab
 
+A hands-on **local Kind lab** for practising how to investigate, remediate, and validate common Kubernetes workload failures. Each scenario starts with an intentionally incorrect configuration and documents the commands used to narrow down the cause.
 
+> **Scope and safety:** These are learning exercises, not evidence of production incident handling. Verify your active Kubernetes context before applying anything. Do not run these demonstration manifests against a company or production cluster.
 
-A hands-on Kubernetes troubleshooting project using a local Kind cluster. This project demonstrates six common Kubernetes failure scenarios, their investigation, remediation, and validation.
+## What this lab covers
 
+| Scenario | Common symptom | Investigation focus |
+|---|---|---|
+| CrashLoopBackOff | Container repeatedly exits | Pod status, current/previous logs, restart count, events |
+| Image pull failure | `ErrImagePull` / `ImagePullBackOff` | Image reference, registry access, Pod events |
+| Pending pod | Pod cannot be scheduled | CPU requests, node capacity, scheduler events |
+| Probe failures | Pod unready or container restarts | Liveness/readiness configuration, logs, events |
+| Service selector mismatch | Service has no endpoints | Service selector, pod labels, endpoint list |
+| Failed rollout and rollback | New Deployment revision does not become ready | Rollout status/history, ReplicaSets, image reference |
 
+## Technology
 
-## Technology Stack
-
-
-
-- Kubernetes
-
-- Kind
-
+- Kubernetes and Kind
 - Docker
-
 - kubectl
-
 - YAML
+- NGINX and BusyBox demo containers
 
-- NGINX
+## Repository contents
 
-- BusyBox
+| File | Purpose |
+|---|---|
+| `01-crashloop-demo.yaml` | CrashLoopBackOff scenario |
+| `02-imagepull-demo.yaml` | Image pull failure scenario |
+| `03-pending-demo.yaml` | Scheduling / insufficient CPU scenario |
+| `04-probe-failure.yaml` | Liveness and readiness probe scenario |
+| `05-service-networking.yaml` | Service selector and endpoint scenario |
+| `06-rollout-demo.yaml` | Failed Deployment rollout / rollback scenario |
+| `RUNBOOKS.md` | Investigation steps, remediation examples, and validation commands |
+| `VALIDATION-EVIDENCE.md` | Recorded observations and the limitations of each validation |
 
+## Prerequisites
 
+- Docker running locally
+- Kind installed
+- kubectl installed
 
-## Scenarios
+The documented local context is `kind-sre-lab` and the namespace is `troubleshooting-lab`. If you create the cluster specifically for this lab, Kind's cluster name `sre-lab` normally produces the context `kind-sre-lab`.
 
-
-
-### 1. CrashLoopBackOff
-
-**Manifest:** `01-crashloop-demo.yaml`
-
-
-
-- **Issue:** The original container command exited with a non-zero status.
-
-- **Investigation:** Inspected pod status, restart count, logs, and events.
-
-- **Resolution:** Corrected the container command so the process remains running.
-
-- **Validation:** Confirmed the pod reached `Running` and `Ready` status.
-
-
-
-### 2. Image Pull Failure
-
-**Manifest:** `02-imagepull-demo.yaml`
-
-
-
-- **Issue:** An invalid container image prevented the pod from starting.
-
-- **Investigation:** Inspected pod events and the configured image.
-
-- **Resolution:** Changed the image to `busybox:1.36`.
-
-- **Validation:** Confirmed the pod reached `Running` and `Ready` status.
-
-
-
-### 3. Pending Pod - Insufficient CPU
-
-**Manifest:** `03-pending-demo.yaml`
-
-
-
-- **Issue:** The pod could not be scheduled because its CPU request exceeded node capacity.
-
-- **Investigation:** Reviewed pod events and resource requests.
-
-- **Resolution:** Reduced the CPU request from `100` cores to `100m`.
-
-- **Validation:** Confirmed the pod was scheduled and became ready.
-
-
-
-### 4. Liveness and Readiness Probe Failures
-
-**Manifest:** `04-probe-failure.yaml`
-
-
-
-- **Issue:** Incorrect probe paths caused health-check failures.
-
-- **Investigation:** Inspected probe configuration, pod status, logs, and events.
-
-- **Resolution:** Corrected the probes and increased their timeout settings and container resource limits.
-
-- **Validation:** The latest observed pod was `1/1 Running` with zero restarts after approximately two minutes. Longer observation is needed before claiming sustained stability.
-
-
-
-### 5. Service Selector Mismatch
-
-**Manifest:** `05-service-networking.yaml`
-
-
-
-- **Issue:** A mismatched Service selector initially resulted in no endpoints.
-
-- **Investigation:** Compared Service selectors with pod labels and inspected endpoints.
-
-- **Resolution:** Corrected the selector to `app=crash-demo`.
-
-- **Validation:** Confirmed an endpoint was populated for the matching pod.
-
-- **Limitation:** This validates endpoint selection only. The BusyBox container is not an HTTP server, so HTTP connectivity was not tested.
-
-
-
-### 6. Failed Deployment Rollout and Rollback
-
-**Manifest:** `06-rollout-demo.yaml`
-
-
-
-- **Issue:** An invalid NGINX image tag caused the updated Deployment to fail.
-
-- **Investigation:** Inspected pod events, Deployment status, and ReplicaSets.
-
-- **Resolution:** Rolled back to the previous working revision:
-
-
+Before applying a manifest, verify the context and namespace:
 
 ```bash
-
-kubectl rollout undo deployment/rollout-demo -n troubleshooting-lab
-
-```
-
-
-
-- **Validation:** Confirmed the Deployment returned to its intended image and both replicas became available.
-
-
-
-## General Troubleshooting Workflow
-
-
-
-1\. Check resource status with `kubectl get`.
-
-2\. Inspect resource details with `kubectl describe`.
-
-3\. Review application logs and Kubernetes events.
-
-4\. Identify the root cause before changing configuration.
-
-5\. Apply the smallest appropriate correction.
-
-6\. Validate recovery and monitor for recurring failures.
-
-7\. Document the issue, resolution, and evidence.
-
-
-
-## Run the Lab
-
-
-
-Verify the active Kubernetes context before applying any manifest:
-
-
-
-```bash
-
 kubectl config current-context
-
+kubectl get nodes
+kubectl get namespace troubleshooting-lab
 ```
 
-
-
-Apply an individual scenario:
-
-
+If the namespace has not been created in your local lab, create it only after confirming the context:
 
 ```bash
+kubectl create namespace troubleshooting-lab
+```
 
+## Run a scenario
+
+Apply **one scenario at a time** from the repository root. For example:
+
+```bash
 kubectl apply -f 01-crashloop-demo.yaml
-
+kubectl get pods -n troubleshooting-lab
+kubectl describe pod <pod-name> -n troubleshooting-lab
+kubectl logs <pod-name> -n troubleshooting-lab
+kubectl get events -n troubleshooting-lab --sort-by=.metadata.creationTimestamp
 ```
 
+Replace `<pod-name>` with the actual Pod name shown by `kubectl get pods`. Use the matching manifest for another scenario, then follow the remediation and validation steps in [RUNBOOKS.md](RUNBOOKS.md).
 
+General troubleshooting sequence:
 
-Inspect the pods and events:
+1. **Identify:** locate the affected Pod, Deployment, or Service.
+2. **Inspect:** check resource state, logs, descriptions, and events.
+3. **Diagnose:** use evidence to determine the likely root cause.
+4. **Remediate:** make the smallest suitable configuration change.
+5. **Validate:** confirm recovery using rollout status, Pod readiness, endpoints, or restart counts as appropriate.
+6. **Record:** capture what was observed and any remaining limitation.
 
-
+Useful commands:
 
 ```bash
-
-kubectl get pods -n troubleshooting-lab
-
+kubectl get pods,deployments,services -n troubleshooting-lab
 kubectl get events -n troubleshooting-lab --sort-by=.metadata.creationTimestamp
-
+kubectl rollout history deployment/rollout-demo -n troubleshooting-lab
+kubectl rollout status deployment/rollout-demo -n troubleshooting-lab
 ```
 
+## Validation notes
 
+The repository's evidence file records observations from prior local lab exercises. Important limitations are kept explicit:
 
-See `RUNBOOKS.md` for detailed investigation commands and remediation guidance.
+- Probe stability was observed for a limited period; that does not prove long-term stability.
+- The Service scenario validates selector matching and endpoint population. The BusyBox container is not an HTTP server, so HTTP connectivity is not claimed.
+- A command example is not the same as a retained terminal transcript; rerun the checks to validate your current environment.
 
+See [VALIDATION-EVIDENCE.md](VALIDATION-EVIDENCE.md) and [RUNBOOKS.md](RUNBOOKS.md) for details.
 
+## Safety checklist
 
-## Safety
-
-
-
-These manifests are intended for a local Kind lab. Verify that the active context is `kind-sre-lab` before applying them. Do not apply demonstration manifests to company or production clusters.
-
-
+- Confirm `kubectl config current-context` before every apply or rollback.
+- Keep the exercises within a disposable local Kind cluster.
+- Never commit credentials, kubeconfig files, access tokens, customer data, or confidential logs.
+- Use workload-specific evidence to confirm recovery rather than assuming that a manifest applying successfully means the application is healthy.
