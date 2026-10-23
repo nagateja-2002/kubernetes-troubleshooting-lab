@@ -10,7 +10,7 @@
 
 - CLI: kubectl
 
-> Results documented here are based on observations recorded during the local lab exercises. Commands and expected outcomes are not substitutes for actual test evidence.
+> Results documented here are observations recorded during earlier local lab exercises. The current repository manifests deliberately reproduce failure states for the first five scenarios; scenario 6 uses a good base revision plus a separate failing update. The GitHub Actions workflow validates Kubernetes schemas only. It does not run a cluster or re-test runtime recovery. Re-run the scenarios from the current commit before claiming fresh runtime validation.
 
 ## 1. CrashLoopBackOff
 
@@ -116,7 +116,7 @@ kubectl get pods --show-labels -n troubleshooting-lab
 
 ## 6. Deployment Rollout Failure and Rollback
 
-**Initial condition:** An invalid NGINX image tag caused the updated Deployment to fail.
+**Initial condition:** Applied `06-rollout-demo.yaml` with a valid NGINX image and waited for two available replicas, then applied `06-rollout-failure.yaml` with an invalid image tag to create the failed revision.
 
 **Remediation:** Executed a Deployment rollback.
 
@@ -143,6 +143,8 @@ kubectl get pods -n troubleshooting-lab
 ```
 
 ## Validation Scope
+
+- The observations above were recorded during prior local lab exercises; the latest CI workflow validates schemas, not runtime failure/recovery behavior.
 
 - The six scenarios describe local lab exercises, not production incident validation.
 
