@@ -6,7 +6,8 @@ metadata:
 spec:
   type: ClusterIP
   selector:
-    app: crash-demo
+    # Intentional mismatch. The target Deployment is labelled app=crash-demo.
+    app: service-demo
   ports:
     - name: http
       port: 80
