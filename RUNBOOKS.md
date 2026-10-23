@@ -200,6 +200,20 @@ Confirm that the Service has an endpoint corresponding to the selected pod.
 - New pods fail to start.
 - Events report image-pull errors.
 - The previous replica set may continue serving available replicas.
+### Create the known-good revision and reproduce the failure
+Apply the good revision first, and wait until both replicas are available:
+```bash
+kubectl apply -f 06-rollout-demo.yaml
+kubectl rollout status deployment/rollout-demo -n troubleshooting-lab
+kubectl get deployment rollout-demo -n troubleshooting-lab
+```
+Apply the invalid update to create a new Deployment revision:
+```bash
+kubectl apply -f 06-rollout-failure.yaml
+kubectl rollout status deployment/rollout-demo -n troubleshooting-lab --timeout=60s
+```
+The rollout command should time out or fail while the bad image cannot be pulled. Inspect events and ReplicaSets before performing recovery.
+
 ### Investigation
 ```bash
 kubectl get deployments -n troubleshooting-lab
@@ -210,7 +224,7 @@ kubectl describe deployment rollout-demo -n troubleshooting-lab
 kubectl get events -n troubleshooting-lab --sort-by=.metadata.creationTimestamp
 ```
 ### Root Cause
-The demonstration Deployment was updated to use an invalid NGINX image tag. Kubernetes could not pull the image for the new pods.
+The initial revision uses a valid `nginx:1.27` image. The failure is introduced as a second revision with `06-rollout-failure.yaml`, which changes the Deployment to a deliberately nonexistent image tag. Kubernetes cannot pull the image for the new pods.
 ### Remediation
 Roll back the Deployment to its previous revision:
 ```bash
@@ -226,7 +240,7 @@ kubectl get deployment rollout-demo -n troubleshooting-lab -o jsonpath="{.spec.t
 Confirm that the rollout completes, the intended replicas become available, and the image reference returns to the previous valid version.
 > Rollback restores the previous Deployment revision. It does not automatically reverse database changes, external side effects, or other resources changed outside that revision.
 ## Safety and Scope
-- These manifests are intended for a local Kind cluster.
+- These manifests intentionally create workload failures and are intended for a disposable local Kind cluster.
 - Verify `kubectl config current-context` before applying manifests.
 - Do not apply demonstration manifests to company or production clusters.
 - Do not include production credentials, access tokens, customer information, or confidential logs in this repository.
