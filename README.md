@@ -32,7 +32,8 @@ A hands-on **local Kind lab** for practising how to investigate, remediate, and 
 | `03-pending-demo.yaml` | Scheduling / insufficient CPU scenario |
 | `04-probe-failure.yaml` | Liveness and readiness probe scenario |
 | `05-service-networking.yaml` | Service selector and endpoint scenario |
-| `06-rollout-demo.yaml` | Failed Deployment rollout / rollback scenario |
+| `06-rollout-demo.yaml` | Known-good revision for rollout/rollback scenario |
+| `06-rollout-failure.yaml` | Deliberately bad image update to trigger a failed rollout |
 | `RUNBOOKS.md` | Investigation steps, remediation examples, and validation commands |
 | `VALIDATION-EVIDENCE.md` | Recorded observations and the limitations of each validation |
 
@@ -89,6 +90,12 @@ kubectl get events -n troubleshooting-lab --sort-by=.metadata.creationTimestamp
 kubectl rollout history deployment/rollout-demo -n troubleshooting-lab
 kubectl rollout status deployment/rollout-demo -n troubleshooting-lab
 ```
+
+## Continuous validation
+
+GitHub Actions runs a pinned Kubeconform schema validation on all six scenario manifests. This validates Kubernetes resource schemas; it does not run a cluster, prove that a failure can be reproduced, or certify recovery.
+
+[View CI runs](https://github.com/nagateja-2002/kubernetes-troubleshooting-lab/actions).
 
 ## Validation notes
 
