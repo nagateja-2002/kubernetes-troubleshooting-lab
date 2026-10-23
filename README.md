@@ -93,7 +93,7 @@ kubectl rollout status deployment/rollout-demo -n troubleshooting-lab
 
 ## Continuous validation
 
-GitHub Actions runs a pinned Kubeconform schema validation on all six scenario manifests. This validates Kubernetes resource schemas; it does not run a cluster, prove that a failure can be reproduced, or certify recovery.
+GitHub Actions runs a pinned Kubeconform schema validation across all manifests used by the six scenarios. This validates Kubernetes resource schemas; it does not run a cluster, prove that a failure can be reproduced, or certify recovery.
 
 [View CI runs](https://github.com/nagateja-2002/kubernetes-troubleshooting-lab/actions).
 
